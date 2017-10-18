@@ -221,13 +221,12 @@ div.tocify {
 
 <div id="objective" class="section level1">
 <h1><span class="header-section-number">1</span> Objective</h1>
-<p>UC-Irvine bank marketing data is a binary classification data that results in subscription or no-subscription. Our objective is to use the ML algorithm to have maximum predictibility for subscrition. The predictibility should have business case in mind, which is to have a prediction by month and capicity to reach out customers.</p>
-<p>As Data Scientist: Based on the data profile have a stepwise approach and use the best ML algorithm to get best prediction.</p>
+<p>In the path to become a data scientist, I like to showcase this self-executed project. This is a binary classification marketing data provided by UC-Irvine. I choose this data because it is realistic, simple and yet tests many concepts and ML algorithms that I have learnt over past two years. The prediction results are optimized for different business relevant scenarios <a href="#optimal-business-metrics">jump to Optimal Business Metrics</a>.</p>
 <div id="key-technical-ideas-used" class="section level2">
 <h2><span class="header-section-number">1.1</span> Key technical ideas used:</h2>
 <p>We make use the following concepts/algorithms</p>
 <ol style="list-style-type: decimal">
-<li>Random Forest (RF) ML algorithm for bench marking as it is powerful yet off-the-shelf algorithm</li>
+<li>Random Forest (RF) ML algorithm for bench marking as it is powerful yet off-the-shelf algorithm <a href="#benchmarking_with_rf">go to</a></li>
 <li>Generalized Linear Model (glm) as it is simplest linear fitting algorithm</li>
 <li>Cohen’s kappa to measure goodness of prediction, as the binary classification is unbalanced with 1:10 ratio.</li>
 <li>Gradient Boosting Model (GBM) as it is one of the most powerful ML algorithm</li>
@@ -353,7 +352,7 @@ library(randomForest)</code></pre>
 <pre><code>## Type rfNews() to see new features/changes/bug fixes.</code></pre>
 <pre class="r"><code>system.time(fit.rf &lt;- randomForest(y~.,data=irvn_rf[idx==1,], importance=TRUE))  # no tuning</code></pre>
 <pre><code>##    user  system elapsed 
-##  439.85    4.47  551.79</code></pre>
+##  428.45    3.87  464.23</code></pre>
 <pre class="r"><code># order the important variable with MeanDecreaseAccuracy
 fit.rf$importance[order(fit.rf$importance[,c(&quot;MeanDecreaseAccuracy&quot;),drop=FALSE], decreasing=TRUE),]</code></pre>
 <pre><code>##                          no           yes MeanDecreaseAccuracy
@@ -574,7 +573,7 @@ library(randomForest)
 #trn_tr &lt;- trn_tr[sample(1:nrow(trn_tr), size=3256, replace=FALSE),]
 system.time(fit.rf &lt;- randomForest(y~.,data=irvn_rf[idx==1,], importance=TRUE))  # no tuning</code></pre>
 <pre><code>##    user  system elapsed 
-##  441.84    4.70  488.32</code></pre>
+##  411.01    3.86  440.72</code></pre>
 <pre class="r"><code># order the important variable with MeanDecreaseAccuracy
 fit.rf$importance[order(fit.rf$importance[,c(&quot;MeanDecreaseAccuracy&quot;),drop=FALSE], decreasing=TRUE),]</code></pre>
 <pre><code>##                          no           yes MeanDecreaseAccuracy
