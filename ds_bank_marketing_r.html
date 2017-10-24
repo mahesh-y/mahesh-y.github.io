@@ -221,8 +221,8 @@ div.tocify {
 
 <div id="objective" class="section level1">
 <h1><span class="header-section-number">1</span> Objective</h1>
-<p>In the path to become a data scientist, I would like to showcase this self-executed project. This is a binary unbalanced classification marketing data provided by UC-Irvine. I choose this data because it is realistic, simple and yet tests many concepts and ML algorithms that I have learnt over past two years.</p>
-<p>The prediction results are optimized and suited for different business relevant scenarios (<a href="#optimal-business-metrics">jump to this section</a>).</p>
+<p>In the path to become a data scientist, I would like to showcase this self-executed project. This is a binary unbalanced classification marketing data provided by UC-Irvine. I choose this data because it is realistic, simple and yet tests many concepts and ML algorithms.</p>
+<p>The prediction results are optimized and suited for various business scenarios (<a href="#optimal-business-metrics">jump to this section</a>).</p>
 <div id="key-technical-ideas-used" class="section level2">
 <h2><span class="header-section-number">1.1</span> Key technical ideas used:</h2>
 <p>We make use the following concepts/algorithms</p>
@@ -240,7 +240,7 @@ div.tocify {
 <h1><span class="header-section-number">2</span> Basic infromation of data</h1>
 <div id="predictor-variables" class="section level2">
 <h2><span class="header-section-number">2.1</span> Predictor Variables</h2>
-<p>UC Irvine Bank Dataset has about 41k observations with 19 predictors variables that are related to following (more details are given in <a href="#appendix-ii---data_dictionary">Appendix II - Data Dictionary</a>):</p>
+<p>UC Irvine Bank Dataset has about 41k observations with 19 predictors variables that are related to following (more details are given in <a href="#appendix_ii_-_data_dictionary">Appendix II - Data Dictionary</a>:</p>
 <ul>
 <li><strong>Customer information</strong> such as age, marital status, job type, has loan? or a house? and more.</li>
 <li><strong>Campaign related</strong> attributes such as contact, month, day of the week</li>
@@ -259,7 +259,7 @@ div.tocify {
 </div>
 <div id="data-preparation" class="section level1">
 <h1><span class="header-section-number">3</span> Data Preparation</h1>
-<p>Based on the description of data <a href="appendix_ii_-_data_dictionary">Appendix II - Data Dictionary</a>), we remove the duration variable as it will bias the prediction.</p>
+<p>Based on the description of data <a href="#appendix_ii_-_data_dictionary">Appendix II - Data Dictionary</a>), we remove the duration variable as it will bias the prediction.</p>
 <p>We will split the data into three sets as (1) Training Set (2) Test Set (3) Validation set in the ratio of 60:20:20. We shall train the ML algorithm with Training Set, and test it with Test Set. Once we get the final model we will additionally validate with Validation set.</p>
 <p>The following code reas the UC-Irivine data from the file and remove “duration” variable</p>
 <pre class="r"><code>rm(list=ls()) # remove all objects
@@ -328,24 +328,24 @@ idx_month &lt;- as.numeric(mapvalues(irvn_org$month,
 </div>
 <div id="benchmarking-with-rf" class="section level1">
 <h1><span class="header-section-number">4</span> Benchmarking with RF</h1>
-<p>After the data is prepared, we choose to run Random Forest (RF) algorithm because it is one of the best ML algorithm and off-the-shelf ML (i.e., no tuning is needed!). We run Random forest with as-is data to get the performance metrics and getting importance of variables. (<a href="#rf-code-section">jump to the code section</a></p>
-<div id="importnce-of-variables" class="section level2">
-<h2><span class="header-section-number">4.1</span> Importnce of variables</h2>
+<p>After the data is prepared, we choose to run Random Forest (RF) algorithm because it is one of the best ML algorithm and off-the-shelf ML (i.e., no tuning is needed!). We run Random forest with as-is data to get the performance metrics and getting importance of variables. (<a href="#rf-code-section">jump to the code section</a>)</p>
+<div id="importance-of-variables" class="section level2">
+<h2><span class="header-section-number">4.1</span> Importance of variables</h2>
 <p>RF provides the list of important predictors that helps in predicting the response. The important predictors are:</p>
 <ol style="list-style-type: decimal">
-<li>month</li>
-<li>euribor3m</li>
-<li>emp.var.rate</li>
-<li>nr.employed</li>
-<li>cons.conf.idx</li>
-<li>cons.price.idx</li>
+<li>month (last contact month of year)</li>
+<li>euribor3m (euribor 3 month rate)</li>
+<li>emp.var.rate (employment variation rate)</li>
+<li>nr.employed (number of employees)</li>
+<li>cons.conf.idx (consumer confidence index)</li>
+<li>cons.price.idx (consumer price index)</li>
 </ol>
 <p>It is surprising that there are no variables depending strongly on customer’s information. Apart from campaign info – month, all variables relates to socio/economic indicators.</p>
 </div>
 <div id="performance-metrics" class="section level2">
 <h2><span class="header-section-number">4.2</span> Performance Metrics</h2>
 <p>Confusion Matrix is powerful representation from which variety of performance metrics can be derived. We will select some metrics that will help in the business case.</p>
-<p>Looking at the output of confusion matrix (from Caret package), we note the following: (<a href="#rf-code-section">jump to the code section</a>:</p>
+<p>Looking at the output of confusion matrix (from Caret package), we note the following: (<a href="#rf-code-section">jump to the code section</a>):</p>
 <p><span class="math display">\[
 \begin{array}
 {c|c|c}
@@ -360,7 +360,7 @@ n=8121 &amp; \text{Actual:}\; ``No&quot; &amp; \text{Actual:}\; ``Yes&quot; \\[1
 </div>
 <div id="subscription-conversion-rate" class="section level3">
 <h3><span class="header-section-number">4.2.2</span> Subscription Conversion Rate</h3>
-<p>We find the “Neg Pred Value” to be related to Subscription Coversion Rate probability which is events that are: <span class="math display">\[\small\text{Subscription Coversion Rate probability}= {\text{Predicted to be &quot;Yes&quot; which are Actually &quot;Yes&quot;}\over{\text{Predicted to be &quot;Yes&quot;}}} \]</span></p>
+<p>We find the “Neg Pred Value” to be related to Subscription Coversion Rate probability which are events that are: <span class="math display">\[\small\text{Subscription Coversion Rate probability}= {\text{Predicted to be &quot;Yes&quot; which are Actually &quot;Yes&quot;}\over{\text{Predicted to be &quot;Yes&quot;}}} \]</span></p>
 <p><span class="math display">\[ = {285\over{285+186}} = 60.5\% \]</span></p>
 </div>
 <div id="potential-customer-capture" class="section level3">
@@ -371,7 +371,7 @@ n=8121 &amp; \text{Actual:}\; ``No&quot; &amp; \text{Actual:}\; ``Yes&quot; \\[1
 </div>
 <div id="performance-metrics-to-monitor" class="section level2">
 <h2><span class="header-section-number">4.3</span> Performance Metrics to Monitor</h2>
-<p>Reimphasizing the above finding, we will continue to track the following metricsfor various ML algorithms with this Random Forest benchmark</p>
+<p>Reemphasizing the above finding, we will use the results of Random Forest algorithm as benchmark to compare the results of other ML algorithms. The metrics that we shall track are:</p>
 <ul>
 <li><font color="red">kappa</font> = 0.35</li>
 <li>balanced accuracy = 64%</li>
@@ -381,16 +381,14 @@ n=8121 &amp; \text{Actual:}\; ``No&quot; &amp; \text{Actual:}\; ``Yes&quot; \\[1
 </div>
 <div id="rf-code-section" class="section level2">
 <h2><span class="header-section-number">4.4</span> RF Code Section</h2>
-<p>Following code is run which gives the results stated in key finding stated above.</p>
-<pre class="r"><code>set.seed(1234) 
+<p>This section provides the code that was run to get the results mentioned above. The output generated by the code has “##” at the beginning of the line.</p>
+<pre class="r"><code>set.seed(1234) # For reproducibility of results
 #for (ii in 1:10){
 irvn_rf &lt;- irvn_org
-library(randomForest)</code></pre>
-<pre><code>## randomForest 4.6-12</code></pre>
-<pre><code>## Type rfNews() to see new features/changes/bug fixes.</code></pre>
-<pre class="r"><code>system.time(fit.rf &lt;- randomForest(y~.,data=irvn_rf[idx==1,], importance=TRUE))  # no tuning</code></pre>
+suppressMessages(library(randomForest))
+system.time(fit.rf &lt;- randomForest(y~.,data=irvn_rf[idx==1,], importance=TRUE))  # no tuning</code></pre>
 <pre><code>##    user  system elapsed 
-##  438.06    4.83  486.44</code></pre>
+##  544.29    8.53 1197.76</code></pre>
 <pre class="r"><code># order the important variable with MeanDecreaseAccuracy
 fit.rf$importance[order(fit.rf$importance[,c(&quot;MeanDecreaseAccuracy&quot;),drop=FALSE], decreasing=TRUE),]</code></pre>
 <pre><code>##                          no           yes MeanDecreaseAccuracy
@@ -444,7 +442,7 @@ library(caret)</code></pre>
 ##     margin</code></pre>
 <pre class="r"><code>length(yirvn_te)</code></pre>
 <pre><code>## [1] 8121</code></pre>
-<pre class="r"><code>print(confusionMatrix(pred_rf_te, yirvn_te))</code></pre>
+<pre class="r"><code>print(confusionMatrix(pred_rf_te, yirvn_te)) # generates rich array of metrics</code></pre>
 <pre><code>## Confusion Matrix and Statistics
 ## 
 ##           Reference
@@ -477,18 +475,24 @@ library(caret)</code></pre>
 </div>
 <div id="fitting-data-with-glm" class="section level1">
 <h1><span class="header-section-number">5</span> Fitting data with glm</h1>
-<p>It is always instructive to fit the data with simplest model that give quick results. We try GLM (General Linear Model). We do the following:</p>
+<p>It is always instructive to fit the data with the simplest model that give quick insight of the data. GLM (General Linear Model) is the simplest model for binary classification.</p>
+<p>Since our purpose is only to gain insight of the data. We place additional conditions on the data before GLM is run.</p>
+<p>We do the following:</p>
 <ol style="list-style-type: decimal">
 <li><font color="red"> Convert month to numbers, becuase month is ordinal</font> (often a month’s data will be closly related to previous month data).</li>
 <li>Choose only the predictor variables that are numericals and use GLM only for those predictors.</li>
 </ol>
-<div id="key-finding" class="section level2">
-<h2><span class="header-section-number">5.1</span> key finding</h2>
+<div id="key-finding-with-glm" class="section level2">
+<h2><span class="header-section-number">5.1</span> key finding with GLM</h2>
+<p>The</p>
 <ul>
 <li>The important variables are (month, campaign, pdays, previous, emp.var.rate, euribor3m, nr.employed)</li>
 <li>kappa is 0.27 which is better than no-model but worse than RF benchmark</li>
 <li>balanced accuracy is 0.59</li>
 </ul>
+</div>
+<div id="glm-code-section" class="section level2">
+<h2><span class="header-section-number">5.2</span> GLM Code Section</h2>
 <pre class="r"><code>#-- identify which variables are numeric
 a &lt;- (sapply(irvn_org, is.factor))
 colnames(irvn)[!a]</code></pre>
@@ -550,7 +554,7 @@ pred_glm_te &lt;- ifelse(predict(fit_glm, newdata=irvn_glm[idx==2,],
                               type=&quot;response&quot;) &lt;0.5,&quot;no&quot;,&quot;yes&quot;)
 
 pred_glm &lt;- predict(fit_glm, newdata=irvn_glm, type=&quot;response&quot;)
-library(caret)
+suppressMessages(library(caret))
 print(confusionMatrix(pred_glm_te, yirvn_te))</code></pre>
 <pre><code>## Confusion Matrix and Statistics
 ## 
@@ -592,17 +596,20 @@ print(confusionMatrix(pred_glm_te, yirvn_te))</code></pre>
 <li>we used only the train data for prediction. So the glm fit does not see the test data.</li>
 <li>GLM fits with only one co-efficient per predictor, hence has low bias.</li>
 </ul>
-<p>To be ultimatly sure, we could use cross-validation with validation data set yirvn_vl done in data preparation section.</p>
-<div id="key-finding-1" class="section level2">
+<p>To be ultimatly sure, we could use cross-validation with validation dataset, yirvn_vl created in data preparation section.</p>
+<div id="key-finding" class="section level2">
 <h2><span class="header-section-number">6.1</span> Key Finding</h2>
 <ul>
-<li>kappa has increased from 0.35 to 0.359, about 2.5% increase from RF benchmark model</li>
+<li>kappa has increased from 0.35 to 0.365, about 4% increase from RF benchmark model</li>
 </ul>
 <p>To check if this increase is statistically significant, we will do t-test to prove that the increase in kappa is real with high probability.</p>
+</div>
+<div id="code-section" class="section level2">
+<h2><span class="header-section-number">6.2</span> Code Section</h2>
 <p>The code below shows the results produced by RF with benchmark blended with added features from GLM.</p>
 <pre class="r"><code>#for (ii in 1:10){
 irvn_rf &lt;- irvn_org
-library(plyr)
+suppressMessages(library(plyr))
 irvn_rf$month &lt;- as.numeric(mapvalues(irvn_org$month,
                                    from=c(&quot;jan&quot;,&quot;feb&quot;,&quot;mar&quot;,&quot;apr&quot;,&quot;may&quot;,
                                           &quot;jun&quot;,&quot;jul&quot;,&quot;aug&quot;,&quot;sep&quot;,&quot;oct&quot;,&quot;nov&quot;,&quot;dec&quot;), 
@@ -615,11 +622,11 @@ irvn_rf$month &lt;- as.numeric(mapvalues(irvn_org$month,
 #colnames(irvn_rf)
 
 # (iii)
-library(randomForest)
+suppressMessages(library(randomForest))
 #trn_tr &lt;- trn_tr[sample(1:nrow(trn_tr), size=3256, replace=FALSE),]
 system.time(fit.rf &lt;- randomForest(y~.,data=irvn_rf[idx==1,], importance=TRUE))  # no tuning</code></pre>
 <pre><code>##    user  system elapsed 
-##  412.88    3.25  437.89</code></pre>
+##  478.75    4.96  590.62</code></pre>
 <pre class="r"><code># order the important variable with MeanDecreaseAccuracy
 fit.rf$importance[order(fit.rf$importance[,c(&quot;MeanDecreaseAccuracy&quot;),drop=FALSE], decreasing=TRUE),]</code></pre>
 <pre><code>##                          no           yes MeanDecreaseAccuracy
@@ -665,7 +672,7 @@ fit.rf$importance[order(fit.rf$importance[,c(&quot;MeanDecreaseAccuracy&quot;),d
 ## housing               110.37157
 ## loan                   79.27993</code></pre>
 <pre class="r"><code>pred_rf_te&lt;-predict(fit.rf, irvn_rf[idx==2,])
-library(caret)
+suppressMessages(library(caret))
 print(confusionMatrix(pred_rf_te, yirvn_te))</code></pre>
 <pre><code>## Confusion Matrix and Statistics
 ## 
