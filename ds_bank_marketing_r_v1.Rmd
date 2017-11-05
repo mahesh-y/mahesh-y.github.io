@@ -1,0 +1,614 @@
+---
+output: 
+  html_document:
+    theme: "yeti"
+    toc: true
+    toc_depth: 4
+    toc_float: true
+    collapsed: false
+    number_sections: true
+    df_print: paged
+---
+
+# Introduction
+
+In the path to become a data scientist, I would like to showcase this self-executed project. This is a binary unbalanced classification banking marketing data from UC-Irvine. I choose this data because it is realistic, simple and yet tests many concepts and ML (Machine Language) algorithms. 
+
+The business case result is presented in a single plot from which various business advantage scenarios can exploited ([jump to this section](#optimal-business-metrics)). 
+
+To get best ML prediction, we go through following steps:
+
+* Firstly benchmarking with RF (Random Forest) which is off-the-self algorithm, yet one of the best ML algorithm ([jump to this section](#benchmarking-with-rf)).
+* We select Cohen's kappa to measure goodness of prediction. This is because the data set is of binary classification which is unbalanced with 1:10 ratio in "no" : "yes". We also select other metrics which is of business interest ([jump to this section](#jump_to_performance_metrics)).
+* GLM algorithm is used because it is simplest logistic ML algorithm.
+* We blend RF and GLM (Generalized Linear Model) to see if it provide better ML performance. 
+* We use t-test to test if the blend produced better ML performance.
+* Finally we use GBM (Gradient Boosting Model) as it is one of the best algorithm and tune it to get best results.
+
+The R code is also included which can produce the results presented here.
+
+# About the Dataset
+
+## Predictor Variables
+
+The Bank Marketing Dataset has about 41k observations with 19 predictors variables that are related to following (more details are given in [Appendix II - Data Dictionary](#jump_to_data_dictionary)):
+
+* __Customer information__ such as age, marital status, job type, has loan? or a house? and more. 
+* __Campaign related__ attributes such as contact, month, day of the week
+* __Social/economic indicator__ such as employment variation rate, consumer price index, consumer confidence index and more
+
+## Response Variable
+
+The response (also known as target or label) variable is column named "y". The response variable has two levels "yes" and "no".
+
+The response "yes" is only 11.3% of data. This means for "no-model", the random chance of getting "yes" is only 11.3%. This is unbalanced binary classification problem. Hence we will track kappa and balanced accuracy as best indicator for isolating the "yes" customers.
+
+## Missing Data
+
+The data at hand does not have any NAs (or missing data). Although original data did have NA which was replaced by "unknown"
+
+# Data Preparation
+
+Based on the description of data ([see Data Dictionary](#jump_to_data_dictionary)), we remove the duration variable as it will bias the prediction.
+
+We will split the data into three sets as (1) _Training Set_ (2) _Test Set_ (3) _Validation Set_ in the ratio of 60:20:20. We shall train the ML algorithm with _Training Set_, and test it with _Test Set_. Once we get the final model we will additionally validate with _Validation Set_.
+
+The following code reads the Bank Marketing data from the file and remove "duration" variable
+```{r reading the data}
+rm(list=ls()) # remove all objects
+irvn_org <- read.csv(file="C:\\ds_local\\dataset\\irvine-bank-marketing.txt")
+irvn_org$duration <- NULL
+#
+irvn <-irvn_org
+yirvn <- irvn_org[,"y",drop=FALSE]
+dim(irvn)
+```
+
+The following code splits the data into three sets: _Training Set_, _Test Set_ and _Validation Set_
+```{r splitting the data}
+set.seed(12345)
+idx <- sample(seq(1,3), size = nrow(irvn_org), replace = TRUE, prob = c(60,20,20))
+table(idx)
+# Defining new sets seperatly for tain set and test set
+yirvn_tr <- yirvn[idx==1,]
+yirvn_te <- yirvn[idx==2,]
+yirvn_vl <- yirvn[idx==3,]
+```
+
+The following code converts "month" varibale from the three-character-month to month-integer, which hints the ML algorithm to use as ordinal variabe.
+```{r month ordinal}
+library(plyr)
+idx_month <- as.numeric(mapvalues(irvn_org$month,
+                                   from=c("jan","feb","mar","apr","may",
+                                          "jun","jul","aug","sep","oct","nov","dec"), 
+                                     to=c(1:12)))
+length(idx_month) # check if it is same as data record count
+```
+
+The follwing code check (i) column names, (ii) structure (iii) any NA present (iv) ratio or binary response.
+```{r basic}
+colnames(irvn) # column names
+str(irvn) # structure
+anyNA(irvn) # Are there any NAs
+table(irvn$y)/length(irvn$y)*100 # Frequency (in %) of response
+```
+# Benchmarking with RF
+
+After the data is prepared, we choose to run Random Forest (RF) algorithm because it is one of the best ML algorithm and off-the-shelf ML (i.e., no tuning is needed!). We run Random forest with as-is data to get the performance metrics and getting importance of variables ([jump to the code section](#jump_to_rf_as_is)).
+
+## Importance of variables
+
+After running the RF algorithm, it provides the list of important predictors that helps in predicting the response. In our case, the important predictors that were found are:
+
+1. month *(last contact month of year)*
+2. euribor3m *(euribor 3 month rate)*
+3. emp.var.rate *(employment variation rate)*
+4. nr.employed *(number of employees)*
+5. cons.conf.idx *(consumer confidence index)*
+6. cons.price.idx *(consumer price index)*
+
+It is surprising that there are no variables depending strongly on customer's information. Apart from campaign info -- month, all variables relates to socio/economic indicators.
+
+## <a name="jump_to_performance_metrics"></a>Performance Metrics
+
+Confusion Matrix is powerful representation from which variety of performance metrics can be derived. In this section, We will select some metrics that will help in the business case. 
+
+Looking at the output of confusion matrix (from Caret package), we note the following: ([jump to the code section](#jump_to_rf_as_is)):
+
+$$
+\begin{array}
+{c|c|c}
+n=8121 & \text{Actual:}\; ``No" & \text{Actual:}\; ``Yes" \\[10pt]
+\hline\text{Predicted:}\; ``No" & 6978 & 672 \\[10pt]
+\hline\text{Predicted:}\;``Yes" & 186 & 284
+\end{array}
+$$
+
+
+### Kappa
+Kappa or balanced accuracy will be our key performance metrics for ML because we are dealing with unbalanced binary classification problem. Running the RF gives kappa = 0.35 and balance accuracy = 64%
+
+### Subscription Conversion Rate
+
+We find the "Neg Pred Value" to be related to Subscription Coversion Rate probability that is given by:
+$$\small\text{Subscription Coversion Rate probability}= {\text{Predicted to be "Yes" which are Actually "Yes"}\over{\text{Predicted to be "Yes"}}} $$
+
+$$ = {284\over{284+186}} = 60.5\% $$
+
+### Potential Customer Capture
+
+We also find the Specificity to be related to Potential Customer Capture proability that is given by:
+$$ \small\text{Potential Customer Capture probability}= {\text{Predicted to be "Yes" which are Actually "Yes"}\over{\text{Total of Actual "Yes"}}} $$
+
+$$= {284\over{284+672}} = 29.8\% $$
+
+## Performance Metrics to Monitor
+
+Re-emphasizing the above finding, we will use the results of Random Forest algorithm as benchmark to compare the results of other ML algorithms. The metrics that we shall track are:
+
+  * <font color="red">kappa</font> = 0.35
+  * balanced accuracy = 64%
+  * <font color="red">Subscription Conversion Rate</font> ("Neg Pred Value") = 60.5%
+  * <font color="red">Potential Customer Capture</font> (specificity) = 29.8%
+
+
+## <a name="jump_to_rf_as_is"></a>Code Section
+
+This section provides the code that was run to get the results mentioned above. The output generated by the code has "##" at the beginning of the line.
+
+For each execution of Random Forest algorithm, it generates performance metrics with different values. This is because the Random Forest algorithm chooses random set of different column at each trial. We set a seed so that we can reproduce the same result given in this report. 
+
+In the code section #** can be removed to generate 10 such confusion Matrix metrics. We will need some samples for the t-test to compare the performance of RF with GLM blended data.
+
+```{r randomforest on as-is}
+ii=1
+#**for (ii in 1:10){   # For reproducibility of results
+set.seed(15678+100*ii)
+irvn_rf <- irvn_org
+suppressMessages(library(randomForest))
+system.time(fit.rf <- randomForest(y~.,data=irvn_rf[idx==1,], importance=TRUE))  # no tuning
+# order the important variable with MeanDecreaseAccuracy
+fit.rf$importance[order(fit.rf$importance[,c("MeanDecreaseAccuracy"),drop=FALSE], decreasing=TRUE),]
+pred_rf_te<-predict(fit.rf, irvn_rf[idx==2,])
+library(caret)
+length(yirvn_te)
+print(confusionMatrix(pred_rf_te, yirvn_te)) # generates rich array of metric
+#pred_rf<-predict(fit.rf, irvn_te, type = "prob")
+#**} #-- for (ii in 1:10){
+```
+
+# Fitting data with glm
+It is always instructive to fit the data with the simplest model that give quick insight of the data. GLM (General Linear Model) is the simplest model for binary classification. 
+
+Since our purpose is only to gain insight of the data. We place additional conditions on the data before GLM is run.
+
+We do the following:
+
+1. <font color="red"> Convert month to numbers, because month is ordinal</font> (often a month's data will be closly related to previous month data).
+2. Choose only the predictor variables that are numericals and use GLM only for those predictors.
+
+## key finding with GLM
+
+Key findings are:
+
+* The important variables are (month, campaign, pdays, previous, emp.var.rate, euribor3m, nr.employed) 
+* kappa is 0.27 which is worse than RF benchmark of 0.35
+* balanced accuracy is 0.59 which is worse than than RF benchmark of 0.64
+
+
+##GLM Code Section
+
+Following code identifies numerical predictors, then prepares the dataframe, *irvn_glm*, that has numerical predictors, convert month to numeric, runs the GLM algorithm, make prediction on test data and calculate the confusion matrix.
+
+```{r glm on num variables,warning = FALSE}
+#-- identify which variables are numeric
+a <- (sapply(irvn_org, is.factor))
+colnames(irvn)[!a]
+#----
+suppressMessages(library(leaps))
+irvn_glm <-irvn_org
+#irvn_glm <- irvn_glm[, c("age","month", "emp.var.rate", "cons.price.idx","cons.conf.idx", "euribor3m", "nr.employed", "y")]
+
+irvn_glm <- irvn_org[, c("age", "month", "campaign", "pdays", "previous", "emp.var.rate",
+                         "cons.price.idx","cons.conf.idx", "euribor3m", "nr.employed", "y")]
+
+suppressMessages(library(plyr))
+irvn_glm$month <- as.numeric(mapvalues(irvn_org$month,
+                                   from=c("jan","feb","mar","apr","may",
+                                          "jun","jul","aug","sep","oct","nov","dec"), 
+                                     to=c(1:12)))
+
+fit_glm <- glm(y~., data=irvn_glm[idx==1,], family="binomial")
+summary(fit_glm)
+
+#plot(fit_glm)
+
+pred_glm_tr <- ifelse(predict(fit_glm, newdata=irvn_glm[idx==1,], 
+                              type="response") <0.5,"no","yes")
+pred_glm_te <- ifelse(predict(fit_glm, newdata=irvn_glm[idx==2,], 
+                              type="response") <0.5,"no","yes")
+
+pred_glm <- predict(fit_glm, newdata=irvn_glm, type="response")
+suppressMessages(library(caret))
+print(confusionMatrix(pred_glm_te, yirvn_te))
+
+```
+# RF with GLM blended data 
+
+Here we run the RF algorithm again but with few changes in the predictor colimns. The changes are:
+
+* Making the month column as numeric. 
+* Take data based on GLM prediction as additional predictor. 
+
+We do not worry about over fitting because:
+
+* we used only the train data for prediction. So the glm fit does not see the test data.
+* GLM fits with only one co-efficient per predictor, hence has low bias.
+
+To be ultimatly sure, we could use cross-validation with validation dataset, yirvn_vl created in data preparation section.
+
+## Key Finding
+
+Unlike GLM or GBM (used later), RF gives different value of kappa for each run. This is because the RF works by making set of decision trees on random subsets of columns. Therefore to compare the two models (1) RF and (2) RF with GLM blended data, we run each model 10 times (in [t-test](#jump_to_t_test) sub-section. The ten kappa values from each models gives average of 0.349 and 0.359, an increase of about 3%.
+
+To check if this increase is statistically significant, we will do t-test to prove that the increase in kappa is real with high confidence.
+
+## Code Section
+
+The code below shows the results produced by RF with benchmark blended with added features from GLM.
+
+In the code section #** can be removed to generate 10 such confusion Matrix metrics. We will need some samples for the t-test to compare the performance of [RF on as-is data](#jump_to_rf_as_is).
+
+```{r randomforest with glm blending, warning = FALSE}
+ii=1
+#**for (ii in 1:10){ 
+set.seed(15678+100*ii)
+irvn_rf <- irvn_org
+suppressMessages(library(plyr))
+irvn_rf$month <- as.numeric(mapvalues(irvn_org$month,
+                                   from=c("jan","feb","mar","apr","may",
+                                          "jun","jul","aug","sep","oct","nov","dec"), 
+                                     to=c(1:12)))
+
+head(pred_glm)
+irvn_rf <-data.frame(irvn_rf, "pred_glm" = pred_glm)
+#colnames(irvn_rf)
+
+# (iii)
+suppressMessages(library(randomForest))
+#trn_tr <- trn_tr[sample(1:nrow(trn_tr), size=3256, replace=FALSE),]
+system.time(fit.rf <- randomForest(y~.,data=irvn_rf[idx==1,], importance=TRUE))  # no tuning
+# order the important variable with MeanDecreaseAccuracy
+fit.rf$importance[order(fit.rf$importance[,c("MeanDecreaseAccuracy"),drop=FALSE], decreasing=TRUE),]
+pred_rf_te<-predict(fit.rf, irvn_rf[idx==2,])
+suppressMessages(library(caret))
+print(confusionMatrix(pred_rf_te, yirvn_te))
+#pred_rf<-predict(fit.rf, irvn_te, type = "prob")
+#**} #-- for (ii in 1:10){
+```
+# How GLM blend fare in t-test
+With GLM blended data and month converted to numerical, we see slight increase in kappa. We are interested in determining if it is true increase or just a statistical noise.
+
+For this we run the following code 10 times: 
+
+1. random forest for as-is
+2. random forest with glm blended data and month to numerical converted
+
+Note: In the above code, just uncomment (by removing #**) open and close line of for loop
+
+## <a name="jump_to_t_test"></a>t-test
+We do t-test to see if the kappa of the two sample -- asis and glm blend is statistically significant.
+
+Here, Null hypothesis, H0 is that the means of two sample are equal.
+Alternate hypothesis, H1 is that means are truely diferrent.
+
+From the code below, we see that p-value is <0.01 which suggests that Null hypothesis can be rejected with 99% confidence. or in plain english, we have >99% confidence that the means of two sample is different.
+
+
+
+```{r}
+kappa_asis <- c(0.3517,0.3455, 0.3552, 0.349, 0.3486, 0.3548, 0.3404, 0.344, 0.3506, 0.3513)
+kappa_glm_blend <- c(0.3496, 0.3598, 0.3572, 0.3553, 0.3597, 0.3643, 0.3504, 0.359, 0.3656, 0.3681)
+t.test(kappa_asis,kappa_glm_blend)             
+```
+
+# Run with GBM  
+Gradient Boosting model is one of the best ML algorithm. This model needs three parameters for tuning (also known as hyper parameters). We will tune and select the parameters that gives maximum kappa.
+
+Normally the GBM algorithm makes the binary decision by calculating the response probability and using the the cut-off at 0.5, i.e., if the response probability is < 0.5, the response is considered "no" otherwise "yes". 
+
+In our case, we will choose our own cut-off to make the binary decision. We will choose the cut-off along with the tuning parameters and settle with the tuning parameter and response cut-off which gives maximum kappa. We will step wise run GBM with all possible combination of the tuning parameters.
+
+## Kappa function
+So far we relied the caret package to get the kappa from caret package. But for tuning we define our own function for kappa as it will be much faster
+```{r }
+kp <- function(pred,obs){
+  cf<-table(pred, obs)
+  if(sum(dim(cf))<4){return(0)}
+  a<- cf[1,1]; c<- cf[2,1]; b<- cf[1,2];d <- cf[2,2]
+  po <- (a+d)/sum(cf); pe <- ((a+b)*(a+c)+(c+d)*(b+d))/sum(cf)^2
+  return(ifelse(pe==1,0,(po-pe)/(1-pe)))}
+```
+
+## tuning parameters with GBM
+
+In the following code we run the GBM for various values of parameters as follows:
+  
+  * *hp_NTREES* with values (501,5001)
+  * *hp_SHRINKAGE* with values (0.05, 0.5, 1)
+  * *hp_DEPTH* with values (1,2,3,4,5)
+  * *hp_MINOBS* with values (3, 5, 10); 
+
+We need to limit with the values of the parameters as there are many combinations possible. With above values, GBM algorithm will have to be run $2\times3\times 5\times 3 = 90$ which could run for the whole day!
+
+We ran 90 times and found the maximum kappa is when: hp_NTREES = 501, hp_SHRINKAGE = 0.05, hp_DEPTH = 49, hp_MINOBS = 3.
+
+## Key findings
+
+We were able to get Cohen's Kappa of 0.445. Compared to the RF benchmark of 0.35, it is pretty good performance.
+
+## Code section for GBM
+
+The code below is used for both tuning parameters and prepare this report for the final tuned model.
+
+When the tuning needs to be done, comment the following on one line of code and run all the choosen combinations set by previous line of code: <pre> hp_NTREES <- c(501); hp_SHRINKAGE <- c( 0.05); hp_DEPTH <- c(49);hp_MINOBS <- c(3); </pre>  
+
+
+```{r gbm, warning = FALSE}
+irvn_gbm <- irvn_org
+irvn_gbm <- data.frame(model.matrix(y~.,data=irvn_org), "pred_glm"=pred_glm, "y"=irvn_org$y)
+#irvn_glm <- data.frame(model.matrix(y~.,data=irvn_org), "y"=irvn_org$y)
+
+irvn_gbm$y <- ifelse(irvn_gbm$y=="yes",1,0)
+suppressMessages(library(gbm))
+suppressMessages(library(caret))
+my_DISTRIBUTION <- "adaboost" #adaboost
+
+hp_NTREES <- c(501); hp_SHRINKAGE <- c( 0.001, 0.01, 0.05); hp_DEPTH <- c( 5, 10, 30, 40, 49);hp_MINOBS <- c(3);
+# line below is commented out when we like to run with the tuning parameters combination provided above
+hp_NTREES <- c(501); hp_SHRINKAGE <- c( 0.05); hp_DEPTH <- c(49);hp_MINOBS <- c(3); 
+for(ihp_NTREES in hp_NTREES){for (ihp_SHRINKAGE in hp_SHRINKAGE) { for (ihp_DEPTH in hp_DEPTH){for (ihp_MINOBS in hp_MINOBS){
+cat("--ntrees: ", ihp_NTREES, ", shrinkage:", ihp_SHRINKAGE, 
+    ", interaction_depth:", ihp_DEPTH,  ", minobs:", ihp_MINOBS, "\n")
+gbm_fit <- gbm(y~., data=irvn_gbm[idx==1,], distribution=my_DISTRIBUTION,
+              n.trees=ihp_NTREES, shrinkage=ihp_SHRINKAGE,
+              interaction.depth = ihp_DEPTH, n.minobsinnode = ihp_MINOBS, verbose=FALSE,
+              cv.folds =0, n.cores=2)
+
+#gbm_fit
+#gbm.perf(gbm_fit)
+#summary(gbm_fit, n.trees=1)
+#summary(gbm_fit, n.trees=gbm.perf(gbm_fit, plot=FALSE))
+
+#----- relative influence --------
+#cat("@FYI - Relative influence -------")
+#rel_inf <- relative.influence(gbm_fit,  n.trees=gbm.perf(gbm_fit, plot=FALSE))
+#print(data.frame("relative_influence"=sort(rel_inf[rel_inf>0],decreasing = TRUE)))
+#cat("@FYI End - Relative influence -------")
+#-------------
+
+#pred_gbm <-predict(gbm_fit, newdata=x_feed_trn_te, 
+#                        n.trees=gbm.perf(gbm_fit, plot=FALSE))
+
+pred_gbm <-predict.gbm(gbm_fit, newdata=irvn_gbm[idx==2,], 
+                        n.trees=gbm.perf(gbm_fit, plot=FALSE), type="response")
+#pred <- ifelse(pred_gbm < 0.5, "no","yes")
+#print(confusionMatrix(pred, yirvn_te))
+#-------- search 4 max kappa
+chk_max <- -1
+for (ii in 1:100){
+  pred <- ifelse(pred_gbm < ii/100, "no","yes")
+  tmp <- kp(pred, yirvn_te)
+  if (chk_max < tmp) {ii_4max <- ii; chk_max <- tmp} 
+}
+cat("--@ntrees: ", ihp_NTREES, ", shrinkage:", ihp_SHRINKAGE,
+    ", interaction_depth:", ihp_DEPTH,  ", minobs:", ihp_MINOBS,
+    "ii for max kappa = ", ii_4max, ", max kappa =", chk_max, "\n")
+#--------
+}}}} # for hyper parameters
+pred <- ifelse(pred_gbm < ii_4max/100, "no","yes")
+print(confusionMatrix(pred, yirvn_te))
+#save(file="c:\\scratch\\irvene\\irvine_bus_case.rdo", pred_gbm, pred, ii_4max, irvn_gbm, idx, gbm_fit)
+```
+
+## Code Section for metrics calculation
+In the code below, the metrics Kappa, Subscription Conversion Rate (Neg Pred Value), Potential Customer Capture (Specificity) is calcualted for various response cut-off value. We focus only on these metrics because it was identified earlier to be useful for business needs.
+
+The following code calculates kappas, Neg Pred Value and Specificity for various response probability cut-offs:
+```{r metrics for various cut-off}
+# defining the limits
+ii_min <- as.integer(min(pred_gbm*100))+1
+ii_max <- as.integer(max(pred_gbm*100))-1
+m_data <-matrix(, nrow = 3, ncol = ii_max-ii_min) # empty metrics
+for (ii in ii_min:(ii_max-1)){
+  cf<-table(ifelse(pred_gbm > ii/100,"yes","no"), yirvn_te)
+  kappa <- kp(ifelse(pred_gbm > ii/100,"yes","no"), yirvn_te)
+  spec <- cf[2,2]/(cf[1,2]+cf[2,2])
+  npred <- cf[2,2]/(cf[2,1]+cf[2,2])
+  m_data[1,ii-ii_min+1] <- kappa
+  m_data[2,ii-ii_min+1] <- spec
+  m_data[3,ii-ii_min+1] <- npred
+}
+
+```
+
+The following code prepares the ggplot graph: 
+```{r message=FALSE,warning=FALSE}
+# This will become column names after reshape-melting. These are 
+# ("kappa", "specificity", "negPredValue") but given appropriate business names
+row.names(m_data) <- c("kappa", "\"Potential-Customer\" capture", 
+                       "Subscription conversion rate") 
+#c("kappa", "specificity", "negPredValue")
+# column names will become y-axis values
+colnames(m_data) <- (ii_min:(ii_max-1)-ii_min+1)/100
+suppressMessages(library(reshape))
+df_melted <- melt(m_data)
+colnames(df_melted) <- c("metric","predicted_probability", "value")
+# making good looking plot
+suppressMessages(library(ggplot2))
+show_plot <- ggplot(df_melted, aes(x = predicted_probability, y = value)) + 
+  geom_line(aes(color = metric, group = metric), size=0.7) +
+  xlab("ML prediction response cut-of for \"Yes\"") + ylab("metric values") +
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=0.5)) +
+  geom_vline(xintercept=0.08, linetype="dashed", size=0.5, colour="green") +
+  geom_vline(xintercept=0.238, linetype="dashed", size=0.5, colour="green") +
+  geom_vline(xintercept=0.455, linetype="dashed", size=0.55, colour="blue") +
+  theme(legend.position = c(0.81, 0.5)) +
+  #legendBackground: c(fill, lineSize, lineType, lineColor)
+  annotate("rect", xmin=0.08, xmax=0.238, ymin=0., ymax=1.0, alpha=.1, fill="green") +
+  ggtitle("Plot for optimization of business metrics") + 
+  theme(plot.title = element_text(hjust = 0.5)) +
+  geom_vline(xintercept=0.01, linetype="dashed", size=0.7, colour="red") +
+  annotate("text", label="no model", x=0.025, y=0.5, colour="blue", alpha=.5) +
+  annotate("text", label="cut-1", x=0.104, y=0.95, colour="blue", alpha=.5) +
+  annotate("text", label="cut-2", x=0.262, y=0.95, colour="blue", alpha=.5) +
+  annotate("text", label="cut-3", x=0.48, y=0.95, colour="blue", alpha=.5)
+```
+
+
+# Optimal Business Metrics
+Following graph shows the values predicted by tuned GBM algorithm. The higher kappa is usually the most optimal region, but depending on the business case various scenarios can be selected. Let us understand the graph below.
+
+```{r}
+show_plot
+```
+
+The x-axis shows the cut-off on prediction response of GBM algorithm, beyond which it is identified as "yes" i.e., customer who subscribed.
+
+Red line shows the chance of capturing the customer that could potentially subscribe. From business perspective higher number is desired with reasonable effort. (In confusion matrix we identified this metric as Specificity)
+
+The blue line is the Subscription conversion rate. From business perspective higher conversion rate is desired without loosing potential customers. (In confusion matrix we identified this metric as "Neg Pred Value")
+
+The green line is Cohen Kappa co-efficent curve. Higher Kappa signifies better identification of the subscribed customer.
+
+With this understanding, we can make few business case scenarios. For example:
+
+1. If the marketing is starting with less budget, then can go with cut-3. This will give a conversion rate of about 65% but capture only 25% of the potential customers.
+
+2. Cut-2 gives the conversion ratio of 50% and capture 50% of potential customers.
+3. If the marketing has more budget, it can also go for cut-1 which will give slightly less conversion rate of cut-2 but capture 65% of customers.
+4. Below the cut-1, the conversion rate drops sharply and it may not be cost-effective.
+
+This concludes the analysis and developing the business case for this data.
+
+# Final Check with Validation Data
+
+It is quite possible that the model becomes slightly biased by using the test data over many iterations when tuning. So to be extra sure, we run the model on validation data which was never used for training or testing.
+
+## Code Section
+
+The following code creates the prediction response on the Valiation data. Rest of the code is nearly the same as use earlier.
+```{r with validation set, message=FALSE,warning=FALSE}
+# create prediction vector response for the validation set based
+# on the same gbm model fit
+pred_gbm <-predict.gbm(gbm_fit, newdata=irvn_gbm[idx==3,], 
+                        n.trees=gbm.perf(gbm_fit, plot=FALSE), type="response")
+ii_min <- as.integer(min(pred_gbm*100))+1
+ii_max <- as.integer(max(pred_gbm*100))-1
+m_data <-matrix(, nrow = 3, ncol = ii_max-ii_min)
+for (ii in ii_min:(ii_max-1)){
+  cf<-table(ifelse(pred_gbm > ii/100,"yes","no"), yirvn_vl)
+  kappa <- kp(ifelse(pred_gbm > ii/100,"yes","no"), yirvn_vl)
+  spec <- cf[2,2]/(cf[1,2]+cf[2,2])
+  npred <- cf[2,2]/(cf[2,1]+cf[2,2])
+  m_data[1,ii-ii_min+1] <- kappa
+  m_data[2,ii-ii_min+1] <- spec
+  m_data[3,ii-ii_min+1] <- npred
+}
+#m_data
+row.names(m_data) <- c("kappa", "\"Potential-Customer\" capture", "Subscription conversion rate") 
+#c("kappa", "specificity", "negPredValue")
+colnames(m_data) <- (ii_min:(ii_max-1)-ii_min+1)/100
+library(reshape)
+df_melted <- melt(m_data)
+colnames(df_melted) <- c("metric","predicted_probability", "value")
+library(ggplot2)
+obj_plot <- ggplot(df_melted, aes(x = predicted_probability, y = value)) + 
+  geom_line(aes(color = metric, group = metric)) +
+  xlab("ML prediction response cut-of for \"Yes\"") + ylab("metric values") +
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=0.5)) +
+  geom_vline(xintercept=0.08, linetype="dashed", size=0.7, colour="green") +
+  geom_vline(xintercept=0.238, linetype="dashed", size=0.7, colour="green") +
+  geom_vline(xintercept=0.455, linetype="dashed", size=0.7, colour="blue") +
+  theme(legend.position = c(0.81, 0.5)) +
+  #legendBackground: c(fill, lineSize, lineType, lineColor)
+  annotate("rect", xmin=0.08, xmax=0.238, ymin=0., ymax=1.0, alpha=.1, fill="green") +
+  ggtitle("Plot for optimization of business metrics") + 
+  theme(plot.title = element_text(hjust = 0.5)) +
+  geom_vline(xintercept=0.01, linetype="dashed", size=0.7, colour="red") +
+  annotate("text", label="no model", x=0.025, y=0.5, colour="blue", alpha=.5) +
+  annotate("text", label="cut-1", x=0.104, y=0.95, colour="blue", alpha=.5) +
+  annotate("text", label="cut-2", x=0.262, y=0.95, colour="blue", alpha=.5) +
+  annotate("text", label="cut-3", x=0.48, y=0.95, colour="blue", alpha=.5)
+```
+
+## Business Optimization Plot
+
+Following plot was generated from validation data set. When compared to plot created from test set ([jump to this section](#optimal-business-metrics)), it shows slight degradation (clearly showing bias created by using many iteration for tuning)
+
+```{r}
+obj_plot
+```
+
+Simple eye-ball comparison of two plot (generated by *test set* vs *validation set*) shows:
+
+  * At cut-3,  the subscription conversion rate decrease 67% from 63%. Conversion rate does not show much change.
+  * At cut-2 the subscription convesion rate shows slight decrease from 50% to about 48%.
+  * At cut-1 the subscription conversion rate decreases from 40% to 37%.
+
+Plot from *Validation Set* is trure representation of predictive power. Business can use this information to optimize their effort vs subscribing customers. 
+
+# Appendix I - Acknowledgements on Datasource
+
+The UC Irvine bank marketing dataset is available from [here](http://www.dxbydt.com/wp-content/uploads/2017/04/bank-marketing.txt). 
+
+I follow [Data Science Central](https://www.datasciencecentral.com/) on twitter which has been an amazing source of knowledge both in breath and depth. So much so that I owe much of my breath of data science knowledge to this site. I am ever grateful to people behind this site.
+
+
+One of the article in [Data Science Central](http://www.datasciencecentral.com/profiles/blogs/decision-trees-classification-interpretation-using-scikit-learn) lead me to [Jitesh Shah's blog](http://www.dxbydt.com/decision-trees-classification-interpretation-using-scikit-learn/) from where I found UC Irvine bank marketing dataset. I realized this is the right dataset to show case my data science skills as shown in this report. I like to also thank to Jitesh Shah for the article.
+
+The data is originally available from [UC Irvine Machine Learning Repository](https://archive.ics.uci.edu/ml/index.php). The Bank Marketing Data has [ID 45175](https://archive.ics.uci.edu/ml/datasets/Bank+Marketing).
+
+# <a name="jump_to_data_dictionary"></a>Appendix II - Data Dictionary
+
+The predictor (same as feature) variables are divided into Customer data, Campaign related attributes and social/economic indicators. 
+
+## Customer data:
+
+1.  _age_ (numeric) 
+2.  _job_ : type of job (categorical: "admin.", "blue-collar", "entrepreneur", "housemaid", "management", "retired", "self-employed", "services", "student", "technician", "unemployed", "unknown") 
+3. _marital_ : marital status (categorical: "divorced", "married", "single", "unknown"; note: "divorced" means divorced or widowed) 
+4. _education_ (categorical: "basic.4y", "basic.6y", "basic.9y", "high.school", "illiterate", "professional.course", "university.degree", "unknown") 
+5. _default_: has credit in default? (categorical: "no", "yes", "unknown") 
+6. _housing_: has housing loan? (categorical: "no", "yes", "unknown") 
+7. _loan_: has personal loan? (categorical: "no", "yes", "unknown") 
+
+## Campaign attributes
+Attributes related to the last touchpoint for the current campaign:
+
+8. _contact_: contact communication type (categorical: "cellular", "telephone") 
+9. _month_: last contact month of year (categorical: "jan", "feb", "mar", ..., "nov", "dec") 
+10. _day\_of\_week_: last contact day of the week (categorical: "mon", "tue", "wed", "thu", "fri") 
+11. _duration_: last contact duration, in seconds (numeric). Important note: this attribute highly affects the output target (e.g., if duration=0 then y="no"). Yet, the duration is not known before a call is undertaken. Also, after the end of the call, y is obviously known. Thus, this input should only be included for benchmark purposes and should be discarded if the intention is to have a realistic predictive model.
+
+## Other attributes:
+12. _campaign_: number of contacts performed during this campaign and for this client (numeric, includes last contact) 
+13. _pdays_: number of days that passed by after the client was last contacted from a previous campaign (numeric; 999 means client was not previously contacted) 
+14. _previous_: number of contacts performed before this campaign and for this client (numeric) 
+15. _poutcome_: outcome of the previous marketing campaign (categorical: "failure", "nonexistent", "success") 
+
+## Social and economic context attributes:
+
+16. _emp.var.rate_: employment variation rate - quarterly indicator (numeric) 
+17. _cons.price.idx_: consumer price index - monthly indicator (numeric) 
+18. _cons.conf.idx_: consumer confidence index - monthly indicator (numeric) 
+19. _euribor3m_: euribor 3 month rate - daily indicator (numeric) 
+20. _nr.employed_: number of employees - quarterly indicator (numeric) 
+
+## Target Variable
+
+21. _y_ - did the customer subscribe to the product pitched? (binary: "yes", "no")
+
+## Missing Attribute Values
+There are several missing values in some categorical attributes, all coded with the "unknown" label. These missing values can be treated as a possible class label or deletion or imputation techniques can be used on them.
+
