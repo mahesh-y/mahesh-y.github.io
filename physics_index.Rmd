@@ -1,0 +1,131 @@
+---
+output: 
+  html_document:
+    theme: "yeti"
+    toc: true
+    toc_depth: 4
+    toc_float: true
+    collapsed: false
+    number_sections: true
+    df_print: paged
+---
+
+<style type="text/css">
+h2 { /* Header 2 */
+    font-size: 20px;
+  color: DarkBlue;
+  font-weight: 600;
+  }
+  
+strong {color: red; }
+  
+em { font-style: normal; font-weight: 500; color: red; }
+</style>
+
+# Wave Motion
+
+##Characteristics of Wave
+
+* has Amplitude,  $y_0$ (in meters)
+* has wavelength, $\lambda$ (in meters)
+* has period, $T$ (in sec.)
+* has frequency, $f={1\over{T}}$ (in Hertz or $sec^{-1}$)
+* has phase, $\phi$ (in radians or degree)
+* has speed, $v=f\lambda$  (in meter/sec)
+* has displacement, $y=y_0 sin(\omega T + \phi)$, $\omega = {2\pi\over{T}}$
+
+## Type of wave
+
+* Longitudinal - peaks and troughs are in same direction of wave.
+* Transverse - peaks and troughs are in perrpendicular direction of wave.
+
+## Relationship with Energy
+
+$\text{Energry} \propto \text{Intensity} \propto (\text{Amplitude})^2$
+
+## Energy spread
+
+If there is no friction:
+
+1. In 3D, the energy spreads on an expanding spherical shell at the speed of the wave. So $\text{Energy} \propto 1/r^2$. Example, light from sun, or sound from a plane. 
+
+2. In 2D, the energy spreads on an expanding ring. So $\text{Energy} \propto 1/r$
+
+3. In 1D, the energy never dissipates! Example, wave created by snapping a rope.
+
+## Other details
+
+### Phase on reflection/transmission
+
+1. When a wave travels from rarer to denser medium, the phase of reflected wave shifts by 180$^\circ$.
+
+2. When a wave travels from denser to rarer medium, the phase of reflected wave remains the same.
+
+3. The transmitted wave does not undergo any phase shift. 
+
+### Speed of the wave
+
+Speed of wave depends on property of the medium it is travelling in. It does not depend on frequency, or amplitude.
+
+Speed of sound in metals is more than liquid, which is more than in gas. More dense the medium the faster the speed of sound. (The more rigid/dense, more the speed).
+
+Speed of sound is faster at higher temprature. (The higher the temperature, the faster the molecule can reach other molecule and transfer their energy)
+
+# Quantum Physics
+
+## Energy of Photon
+
+* <strong> $\boxed{E = h f\;\;}$ </strong>, given by Max Plank, E is energy. 
+
+$f$ is the frequency of photon.
+
+Other relations like:  $\boxed{E = {hc\over{\lambda}}\;\;}$  can be derived using wave property, $\boxed{c = \lambda f \;\;}$ and *for photon* $\boxed{E = cp\;\;}$ p is momentum, E is the energy.
+
+## Duality of Particle and light
+
+When Max Plank said, the light behaves like particle, De-Broglie said, particle may also behave like wave given by:
+
+* <strong> $\boxed{\lambda = {h\over{p}}\;\; }$ </strong>, shows connection beween wavelength (wave property) and momentum (particle property)
+
+## Photo-electric effect
+
+Einstien gave this formula:
+
+* <strong> $\boxed{\text{(E of photon) = (Work function of Metal) + (K.E. of eletron)}\;\; }$ </strong>
+
+It is really conservation of energy equation of the phenomenon, where:
+
+* Initial state
+    + Photon is incident on a metal
+* Final state
+    + Photon is *completly absorbed*
+    + It removes electron from the metal with Kinetic Energy
+    + Energy needed to make electron free from the metal. This is work function and is *property of the metal* (some metal hugs electron tighter and so has large work function).
+
+## X-Ray
+
+* Initial State:
+    + Electron accelerated (energy gained = eV, V is voltage between the plates).
+    + Electron hits heavy nucleus that has high Z (proton)
+* Final State
+    + The nucleus breaks the electron's speed
+    + Sudden breaking releases photon in X-ray region
+    
+Interesting Facts
+
+* X-ray wave-length is $  1 A . 1 Angstrom = 10^(-10)m $
+
+# Nuclear Physics
+
+## Decay formula
+
+* <strong> $\boxed{N = N_0 e^{-\lambda T}\;\;}$ </strong>
+* <strong> $\boxed{ln(2) = \lambda T_{\text{half life}}\;\;}$ </strong>(learn to derive from above equation)
+* Half life is time taken to for radioactive material to fall to half the original value.
+* <strong> $\boxed{{dN\over{dt}} = -\lambda N\;\;}$ </strong>. Rate of decay is proportional to Number of radioactive particles.
+
+## Rays type
+
+* Alpha ray - is essentially helium with stripped electron
+* Beta ray - is essentially high speed electron or positron
+* gamma Ray - is photon of very low wavelength ( < 0.1 Angstrom)
