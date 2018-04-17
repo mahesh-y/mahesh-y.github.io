@@ -1,0 +1,75 @@
+---
+title: "Regression with neural network in keras"
+output: 
+  html_document:
+    theme: "yeti"
+    toc: true
+    toc_depth: 4
+    toc_float: true
+    collapsed: false
+    number_sections: true
+    df_print: paged
+---
+
+# Objective/Overview
+
+The objective of this project is to use neural network with keras to solve regression problem in Python and R. This project is originally done in Python in Deep Learning with Keras, from Antonio Gulli and Sujit Pal, Keras regression example - predicting benzene levels in the air. Here we also do with R with some improvision.
+
+This section executes purple part of the project flow shown in the figure below in R.
+<p></p> 
+![](image/mproj_keras_regression_airquality.png)
+
+## Links
+
+Following are the links for the code and report generated
+
+Relates to purple part of the project (see figure above).
+  - [Report in R](mproj_keras_regression_airquality_1_basic.html) (This page!)
+  - [Code as Rmd file](mproj_keras_regression_airquality_1_basic.Rmd) (executed in Rstudio)
+
+Relates to blue part of the project (see figure above).
+  - [Report in R](mproj_keras_regression_airquality_2_keras.html)
+  - [Code as Rmd file](mproj_keras_regression_airquality_2_keras.Rmd) (executed in Rstudio)
+  - [Report in Python](mproj_regression_airquality.html)
+  - [Code in Python](mproj_regression_airquality.ipynb) (executed in Jupyter)
+
+## Data source: 
+
+Courtesy of https://archive.ics.uci.edu/ml/datasets/Air+Quality
+
+
+```{r download and read zip file}
+temp <- tempfile()
+download.file("https://archive.ics.uci.edu/ml/machine-learning-databases/00360/AirQualityUCI.zip",
+              temp)
+df_data <- read.table(unz(temp, "AirQualityUCI.csv"), sep=";", dec=",", header=TRUE)
+unlink(temp)
+colnames(df_data)
+#https://github.com/rstudio/keras/issues/311
+```
+
+# Cleaning and Saving File
+```{r data preparation - basic cleaning and save as file}
+#df_data <- read.table("c:/ds_local/dataset/AirQualityUCI.csv", dec=",", sep=";", header=TRUE)
+head(df_data)
+
+library(visdat)
+vis_dat(df_data)
+vis_miss(df_data)
+
+# last two columns has no data.
+df_data$X <- NULL;df_data$X.1 <- NULL
+# Date Time has no impact on prediction
+df_data$Date <- NULL;df_data$Time <- NULL
+# We delete all rows than as any column with NA 
+df_data <- na.omit(df_data)
+
+# curating the column names
+colnames(df_data)
+colnames(df_data) <- gsub("\\.", "_", colnames(df_data)) # repalce . with _
+colnames(df_data) <- gsub("_$","", colnames(df_data)) # remove last _ character
+
+write.csv(df_data,
+          file="c:/ds_local/dataset/AirQualityUCI_cleaned.csv",
+          row.names = FALSE)
+```
