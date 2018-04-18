@@ -35,14 +35,16 @@ This section executes blue part of the project flow shown in the figure below in
 Following are the links for the code and report generated
 
 Relates to purple part of the project (see figure above).
-  - [Report in R](mproj_keras_regression_airquality_1_basic.html) (This page!)
-  - [Code as Rmd file](mproj_keras_regression_airquality_1_basic.Rmd) (executed in Rstudio)
+
+* [Report in R](mproj_keras_regression_airquality_1_basic.html) 
+* [Code as Rmd file](mproj_keras_regression_airquality_1_basic.Rmd) (executed in Rstudio)
 
 Relates to blue part of the project (see figure above).
-  - [Report in R](mproj_keras_regression_airquality_2_keras.html)
-  - [Code as Rmd file](mproj_keras_regression_airquality_2_keras.Rmd) (executed in Rstudio)
-  - [Report in Python](mproj_regression_airquality.html)
-  - [Code in Python](mproj_regression_airquality.ipynb) (executed in Jupyter)
+
+* [Report in R](mproj_keras_regression_airquality_2_keras.html) _(This page!)_
+* [Code as Rmd file](mproj_keras_regression_airquality_2_keras.Rmd) (executed in Rstudio)
+* [Report in Python](mproj_regression_airquality.html)
+* [Code in Python](mproj_regression_airquality.ipynb) (executed in Jupyter)
 
 ## Data source: 
 
